@@ -19,6 +19,6 @@ using namespace std;
 
 extern char *optarg;
 
-void reaper(int sig);
 int passiveSocket(const int port, const char *transport, int qlen);
 void server(int port);
+void client(const char *des);

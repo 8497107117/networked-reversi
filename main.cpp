@@ -1,10 +1,5 @@
 #include "main.h"
 
-void reaper(int sig) {
-	int status;
-	waitpid(-1, &status, WNOHANG);
-}
-
 int passiveSocket(const int port, const char *transport, int qlen) {
 	struct protoent *ppe; /* pointer to protocol information entry*/
 	struct sockaddr_in serverInfo; /* an Internet endpoint address */
@@ -52,24 +47,30 @@ void server(int port) {
 	int masterSock; /* master server socket */
 	int slaveSock; /* slave server socket */
 	masterSock = passiveSocket(port, "tcp", QLEN);
-	(void) signal(SIGCHLD, reaper);
 
-	int pid;
 	clientAddrLen = sizeof(clientInfo);
 	slaveSock = accept(masterSock, (struct sockaddr *)&clientInfo, &clientAddrLen);
 	if(slaveSock < 0) { cout << "accept error" << endl; exit(1); }
-	if((pid = fork()) < 0) {
-		cout << "fork error";
-	}
-	else if(pid > 0) {
-		waitpid(pid, NULL, 0);
-		close(slaveSock);
-		exit(0);
-	}
-	else {
-		//	start game
-		exit(0);
-	}
+	//	start game
+	close(slaveSock);
+	return;
+}
+
+void client(const char *des) {
+	string tmp(des);
+	int pos = tmp.find(":");
+	const char *ip = tmp.substr(0, pos).c_str();
+	int port = atoi(tmp.substr(pos + 1).c_str());
+	struct sockaddr_in serverInfo; /* the address of a server */
+	int sock;
+	sock = socket(PF_INET, SOCK_STREAM, 0);
+	serverInfo.sin_family = AF_INET;
+	serverInfo.sin_port = htons((unsigned short)port);
+	inet_pton(AF_INET, ip, &serverInfo.sin_addr.s_addr);
+	connect(sock, (struct sockaddr *) &serverInfo, sizeof(serverInfo));
+	printf("connnnnn\n");
+	close(sock);
+	return;
 }
 
 int main(int argc, char **argv) {
@@ -85,7 +86,7 @@ int main(int argc, char **argv) {
 				server(port);
 				break;
 			case 'c':
-				cout << "client " << optarg << endl;
+				client(optarg);
 				break;
 			case '?':
 				cout << "Unknown option." << endl;
