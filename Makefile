@@ -1,14 +1,15 @@
 CXX = g++
-CFLAGS = -g -Wall
-TARGET = othello
-OBJECTS = main.o
+CFLAGS = -Wall -g -I/usr/include/ncurses
+LDFLAGS = -lncurses -pthread
+TARGET = reversi
+OBJECTS = main.o othello.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-		$(CXX) -o $@ $^
+		$(CXX) -o $@ $^ $(LDFLAGS)
 $(OBJECTS): %.o: %.cpp %.h
 	$(CXX) -o $@ -c $< $(CFLAGS)
 
 clean:
-		rm -f *.o othello
+		rm -f *.o $(TARGET)
