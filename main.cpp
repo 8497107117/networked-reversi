@@ -53,6 +53,7 @@ void server(int port) {
 	if(slaveSock < 0) { cout << "accept error" << endl; exit(1); }
 	reversi(slaveSock, PLAYER1);
 	close(slaveSock);
+	close(masterSock);
 	return;
 }
 

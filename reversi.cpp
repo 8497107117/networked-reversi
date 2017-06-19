@@ -44,7 +44,170 @@ void turnMsg(int player) {
 	bool isMyturn = player == turn;
 	char msg[64];
 	sprintf(msg, "Player #%d: %s", player > 0 ? 1 : 2, isMyturn ? "It's my turn" : "Waiting for peer");
+	draw_message("                              ", 0);
 	draw_message(msg, !isMyturn/* color setting */);
+	refresh();
+}
+
+int isValid(int x, int y, int player) {
+	if(board[y][x]) return 0;
+	int valid = 0;
+	int otherPlayer = player * -1;
+	/* check y = constance */
+	for(int i = x + 1;i < 8;i++) {
+		if((i == x + 1 && board[y][i] == player) || board[y][i] == 0) break;
+		if(board[y][i] == otherPlayer) continue;
+		else if(board[y][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	for(int i = x - 1;i >= 0;i--) {
+		if((i == x - 1 && board[y][i] == player) || board[y][i] == 0) break;
+		if(board[y][i] == otherPlayer) continue;
+		else if(board[y][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	/* check x = constance */
+	for(int i = y + 1;i < 8;i++) {
+		if((i == y + 1 && board[i][x] == player) || board[i][x] == 0) break;
+		if(board[i][x] == otherPlayer) continue;
+		else if(board[i][x] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	for(int i = y - 1;i >= 0;i--) {
+		if((i == y - 1 && board[i][x] == player) || board[i][x] == 0) break;
+		if(board[i][x] == otherPlayer) continue;
+		else if(board[i][x] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	/* check y = x + a */
+	for(int i = x + 1, j = y + 1;i < 8 && j < 8;i++, j++) {
+		if((i == x + 1 && board[j][i] == player) || board[j][i] == 0) break;
+		if(board[j][i] == otherPlayer) continue;
+		else if(board[j][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	for(int i = x - 1, j = y - 1;i >= 0 && j >= 0;i--, j--) {
+		if((i == x - 1 && board[j][i] == player) || board[j][i] == 0) break;
+		if(board[j][i] == otherPlayer) continue;
+		else if(board[j][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	/* check y = -x + a */
+	for(int i = x + 1, j = y - 1;i < 8 && j >= 0;i++, j--) {
+		if((i == x + 1 && board[j][i] == player) || board[j][i] == 0) break;
+		if(board[j][i] == otherPlayer) continue;
+		else if(board[j][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	valid = valid << 1;
+	for(int i = x - 1, j = y + 1;i >= 0 && j < 8;i--, j++) {
+		if((i == x - 1 && board[j][i] == player) || board[j][i] == 0) break;
+		if(board[j][i] == otherPlayer) continue;
+		else if(board[j][i] == player) {
+			valid += 1;
+			break;
+		}
+	}
+	return valid;
+}
+
+bool checkHasValid(int player) {
+	int has = false;
+	for(int i = 0;i < 8;i++)
+		for(int j = 0;j < 8;j++)
+			if(isValid(i, j, player) > 0) {
+				has = true;
+				break;
+			}
+	return has;
+}
+
+void putPiece(int validStatus, int player) {
+	int status = validStatus;
+	board[cy][cx] = player;
+	/* y = -x + a */
+	if(status & 1) {
+		for(int i = cx - 1, j = cy + 1;i >= 0 && j < 8;i--, j++) {
+			if(board[j][i] == player) break;
+			board[j][i] = player;
+		}
+	}
+	status = status >> 1;
+	if(status & 1) {
+		for(int i = cx + 1, j = cy - 1;i < 8 && j >= 0;i++, j--) {
+			if(board[j][i] == player) break;
+			board[j][i] = player;
+		}
+	}
+	status = status >> 1;
+	/* y = x + a */
+	if(status & 1) {
+		for(int i = cx - 1, j = cy - 1;i >= 0 && j >= 0;i--, j--) {
+			if(board[j][i] == player) break;
+			board[j][i] = player;
+		}
+	}
+	status = status >> 1;
+	if(status & 1) {
+		for(int i = cx + 1, j = cy + 1;i < 8 && j < 8;i++, j++) {
+			if(board[j][i] == player) break;
+			board[j][i] = player;
+		}
+	}
+	status = status >> 1;
+	/* check x = constance */
+	if(status & 1) {
+		for(int i = cy - 1;i >= 0;i--) {
+			if(board[i][cx] == player) break;
+			board[i][cx] = player;
+		}
+	}
+	status = status >> 1;
+	if(status & 1) {
+		for(int i = cy + 1;i < 8;i++) {
+			if(board[i][cx] == player) break;
+			board[i][cx] = player;
+		}
+	}
+	status = status >> 1;
+	/* y = constance */
+	if(status & 1) {
+		for(int i = cx - 1;i >= 0;i--) {
+			if(board[cy][i] == player) break;
+			board[cy][i] = player;
+		}
+	}
+	status = status >> 1;
+	if(status & 1) {
+		for(int i = cx + 1;i < 8;i++) {
+			if(board[cy][i] == player) break;
+			board[cy][i] = player;
+		}
+	}
+	draw_board();
+	draw_score();
+	draw_cursor(cx, cy, 1);
+	turn *= -1;
 }
 
 void reversi(int sock, int player) {
@@ -54,7 +217,7 @@ restart:
 	while(true) {
 		turnMsg(player);
 		if(checkFd(STDIN_FILENO)) {
-			int ch = getch();
+			int ch = getch(), validStatus;
 			bool isMyturn = player == turn;
 
 			switch(ch) {
@@ -62,13 +225,10 @@ restart:
 			case 0x0d:
 			case 0x0a:
 			case KEY_ENTER:
-				if(!board[cy][cx] && isMyturn) {
+				validStatus = isValid(cx, cy, player);
+				if(validStatus > 0 && isMyturn) {
 					write(sock, " ", 1);
-					board[cy][cx] = player;
-					draw_cursor(cx, cy, 1);
-					draw_score();
-					turn = turn == PLAYER1 ? PLAYER2 : PLAYER1;
-					turnMsg(player);
+					putPiece(validStatus, player);
 				}
 				break;
 			case 'q':
@@ -128,11 +288,7 @@ restart:
 				int ch = buf[0];
 				switch(ch) {
 					case ' ':
-						board[cy][cx] = player == PLAYER1 ? PLAYER2 : PLAYER1;
-						draw_cursor(cx, cy, 1);
-						draw_score();
-						turn = turn == PLAYER1 ? PLAYER2 : PLAYER1;
-						turnMsg(player);
+						putPiece(isValid(cx, cy, player * -1), player * -1);
 						break;
 					case 'r':
 						goto restart;
