@@ -18,6 +18,7 @@ void resetBoard() {
 	clear();
 	cx = cy = 3;
 	turn = PLAYER1;
+	gameEnd = false;
 	init_board();
 	draw_board();
 	draw_cursor(cx, cy, 1);
