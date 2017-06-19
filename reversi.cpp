@@ -41,10 +41,11 @@ bool checkFd(int fd) {
 }
 
 void turnMsg(int player) {
+	if(gameEnd) return;
 	bool isMyturn = player == turn;
 	char msg[64];
 	sprintf(msg, "Player #%d: %s", player > 0 ? 1 : 2, isMyturn ? "It's my turn" : "Waiting for peer");
-	draw_message("                              ", 0);
+	draw_message("                                 ", 0);
 	draw_message(msg, !isMyturn/* color setting */);
 	refresh();
 }
@@ -132,7 +133,7 @@ int isValid(int x, int y, int player) {
 }
 
 bool checkHasValid(int player) {
-	int has = false;
+	bool has = false;
 	for(int i = 0;i < 8;i++)
 		for(int j = 0;j < 8;j++)
 			if(isValid(i, j, player) > 0) {
@@ -208,6 +209,23 @@ void putPiece(int validStatus, int player) {
 	draw_score();
 	draw_cursor(cx, cy, 1);
 	turn *= -1;
+}
+
+void judgeWhoWin(int player) {
+	int black = 0, white = 0;
+	for(int i = 0;i < BOARDSZ;i++) {
+		for(int j = 0;j < BOARDSZ;j++) {
+			if(board[i][j] == PLAYER1) white++;
+			else if(board[i][j] == PLAYER2) black++;
+		}
+	}
+	draw_message("                                      ", 0);
+	if(white > black) draw_message("PLAYER 1 WIN!!!", player == PLAYER1);
+	else if(white < black) draw_message("PLAYER 2 WIN!!!", player == PLAYER2);
+	else draw_message("DRAW~~~", 0);
+	refresh();
+	turn = 0;
+	gameEnd = true;
 }
 
 void reversi(int sock, int player) {
@@ -289,6 +307,20 @@ restart:
 				switch(ch) {
 					case ' ':
 						putPiece(isValid(cx, cy, player * -1), player * -1);
+						if(!checkHasValid(player)) {
+							write(sock, "t", 1);
+							turn *= -1;
+						}
+						break;
+					case 't':
+						if(!checkHasValid(player)) {
+							write(sock, "e", 1);
+							judgeWhoWin(player);
+						}
+						else turn *= -1;
+						break;
+					case 'e':
+						judgeWhoWin(player);
 						break;
 					case 'r':
 						goto restart;
