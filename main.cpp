@@ -1,100 +1,5 @@
 #include "main.h"
 
-void reversi(int sock) {
-	initscr();			// start curses mode
-	getmaxyx(stdscr, height, width);// get screen size
-
-	cbreak();			// disable buffering
-					// - use raw() to disable Ctrl-Z and Ctrl-C as well,
-	halfdelay(1);			// non-blocking getch after n * 1/10 seconds
-	noecho();			// disable echo
-	keypad(stdscr, TRUE);		// enable function keys and arrow keys
-	curs_set(0);			// hide the cursor
-
-	init_colors();
-
-restart:
-	clear();
-	cx = cy = 3;
-	init_board();
-	draw_board();
-	draw_cursor(cx, cy, 1);
-	draw_score();
-	refresh();
-
-	attron(A_BOLD);
-	move(height-1, 0);	printw("Arrow keys: move; Space: put GREEN; Return: put PURPLE; R: reset; Q: quit");
-	attroff(A_BOLD);
-
-	while(true) {			// main loop
-		int ch = getch();
-		int moved = 0;
-
-		switch(ch) {
-		case ' ':
-			board[cy][cx] = PLAYER1;
-			draw_cursor(cx, cy, 1);
-			draw_score();
-			break;
-		case 0x0d:
-		case 0x0a:
-		case KEY_ENTER:
-			board[cy][cx] = PLAYER2;
-			draw_cursor(cx, cy, 1);
-			draw_score();
-			break;
-		case 'q':
-		case 'Q':
-			goto quit;
-			break;
-		case 'r':
-		case 'R':
-			goto restart;
-			break;
-		case 'k':
-		case KEY_UP:
-			draw_cursor(cx, cy, 0);
-			cy = (cy-1+BOARDSZ) % BOARDSZ;
-			draw_cursor(cx, cy, 1);
-			moved++;
-			break;
-		case 'j':
-		case KEY_DOWN:
-			draw_cursor(cx, cy, 0);
-			cy = (cy+1) % BOARDSZ;
-			draw_cursor(cx, cy, 1);
-			moved++;
-			break;
-		case 'h':
-		case KEY_LEFT:
-			draw_cursor(cx, cy, 0);
-			cx = (cx-1+BOARDSZ) % BOARDSZ;
-			draw_cursor(cx, cy, 1);
-			moved++;
-			break;
-		case 'l':
-		case KEY_RIGHT:
-			draw_cursor(cx, cy, 0);
-			cx = (cx+1) % BOARDSZ;
-			draw_cursor(cx, cy, 1);
-			moved++;
-			break;
-		}
-
-		if(moved) {
-			refresh();
-			moved = 0;
-		}
-
-		napms(1);		// sleep for 1ms
-	}
-
-quit:
-	endwin();			// end curses mode
-
-	return;
-}
-
 int passiveSocket(const int port, const char *transport, int qlen) {
 	struct protoent *ppe; /* pointer to protocol information entry*/
 	struct sockaddr_in serverInfo; /* an Internet endpoint address */
@@ -146,7 +51,7 @@ void server(int port) {
 	clientAddrLen = sizeof(clientInfo);
 	slaveSock = accept(masterSock, (struct sockaddr *)&clientInfo, &clientAddrLen);
 	if(slaveSock < 0) { cout << "accept error" << endl; exit(1); }
-	reversi(slaveSock);
+	reversi(slaveSock, PLAYER1);
 	close(slaveSock);
 	return;
 }
@@ -166,7 +71,7 @@ void client(const char *des) {
 		printf("connect fail on port: %d\n", port);
 		return;
 	}
-	reversi(sock);
+	reversi(sock, PLAYER2);
 	close(sock);
 	return;
 }

@@ -2,7 +2,7 @@ CXX = g++
 CFLAGS = -Wall -g -I/usr/include/ncurses
 LDFLAGS = -lncurses -pthread
 TARGET = reversi
-OBJECTS = main.o othello.o
+OBJECTS = main.o othello.o reversi.o
 
 all: $(TARGET)
 
